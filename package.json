@@ -1,0 +1,30 @@
+{
+  "name": "swim-homework",
+  "version": "1.0.0",
+  "description": "MVP приложение для домашних заданий по плаванию",
+  "main": "server/index.js",
+  "scripts": {
+    "dev": "concurrently \"npm run server\" \"npm run client\"",
+    "server": "nodemon server/index.js",
+    "client": "cd client && npm start",
+    "build": "cd client && npm run build",
+    "install-all": "npm install && cd client && npm install",
+    "start": "node server/index.js"
+  },
+  "keywords": ["swimming", "training", "pwa", "react"],
+  "author": "SwimHomework Team",
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.18.2",
+    "cors": "^2.8.5",
+    "dotenv": "^16.3.1",
+    "google-auth-library": "^9.0.0",
+    "body-parser": "^1.20.2",
+    "helmet": "^7.1.0",
+    "compression": "^1.7.4"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.2",
+    "concurrently": "^8.2.2"
+  }
+}
