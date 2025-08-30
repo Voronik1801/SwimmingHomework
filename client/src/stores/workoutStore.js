@@ -13,6 +13,7 @@ const createWorkoutStore = (set, get) => ({
   startTime: null,
   totalDistance: 0,
   completedDistance: 0,
+  currentExerciseProgress: 0, // Прогресс текущего упражнения
   skippedExercises: [], // Массив пропущенных упражнений
   showCompleteModal: false, // Флаг для показа модального окна завершения
 
@@ -39,16 +40,25 @@ const createWorkoutStore = (set, get) => ({
   // Actions
   setCurrentWorkout: (workout) => set({ currentWorkout: workout }),
   
-  startWorkout: () => set({ 
-    isWorkoutActive: true, 
-    startTime: Date.now(),
-    currentExerciseIndex: 0,
-    currentSetIndex: 0,
-    currentPartIndex: 0,
-    completedDistance: 0,
-    skippedExercises: [],
-    showCompleteModal: false
-  }),
+  startWorkout: () => {
+    set({ 
+      isWorkoutActive: true, 
+      startTime: Date.now(),
+      currentExerciseIndex: 0,
+      currentSetIndex: 0,
+      currentPartIndex: 0,
+      completedDistance: 0,
+      currentExerciseProgress: 0,
+      skippedExercises: [],
+      showCompleteModal: false
+    });
+    
+    // Автоматически устанавливаем оптимальный интервал для первого упражнения
+    setTimeout(() => {
+      const optimalInterval = get().getOptimalIntervalForExercise();
+      set({ completionInterval: optimalInterval });
+    }, 0);
+  },
 
   pauseWorkout: () => set({ isPaused: true }),
   resumeWorkout: () => set({ isPaused: false }),
@@ -70,6 +80,12 @@ const createWorkoutStore = (set, get) => ({
     
     // Проверяем, завершено ли упражнение
     if (nextProgress >= currentExercise.totalDistance) {
+      // Обновляем общую дистанцию
+      set({
+        completedDistance: get().completedDistance + currentExercise.totalDistance,
+        currentExerciseProgress: 0 // Сбрасываем прогресс текущего упражнения
+      });
+      
       // Проверяем, есть ли отдых после завершения упражнения
       if (currentExercise.rest) {
         // Запускаем таймер отдыха
@@ -85,7 +101,7 @@ const createWorkoutStore = (set, get) => ({
     } else {
       // Обновляем прогресс текущего упражнения
       set({
-        completedDistance: get().completedDistance + completionInterval
+        currentExerciseProgress: nextProgress
       });
     }
   },
@@ -111,6 +127,7 @@ const createWorkoutStore = (set, get) => ({
           currentExerciseIndex: 0,
           currentSetIndex: 0,
           currentPartIndex: 0,
+          currentExerciseProgress: 0,
           showCompleteModal: true // Добавляем флаг для показа модального окна
         });
         return;
@@ -119,16 +136,24 @@ const createWorkoutStore = (set, get) => ({
         set({
           currentExerciseIndex: nextExerciseIndex,
           currentSetIndex: 0,
-          currentPartIndex: 0
+          currentPartIndex: 0,
+          currentExerciseProgress: 0 // Сбрасываем прогресс для нового упражнения
         });
       }
     } else {
       // Переходим к следующему упражнению в текущем блоке
       set({
         currentSetIndex: nextSetIndex,
-        currentPartIndex: 0
+        currentPartIndex: 0,
+        currentExerciseProgress: 0 // Сбрасываем прогресс для нового упражнения
       });
     }
+    
+    // Автоматически устанавливаем оптимальный интервал для нового упражнения
+    setTimeout(() => {
+      const optimalInterval = get().getOptimalIntervalForExercise();
+      set({ completionInterval: optimalInterval });
+    }, 0);
   },
 
   // Парсинг времени отдыха
@@ -194,7 +219,7 @@ const createWorkoutStore = (set, get) => ({
     isPaused: false 
   }),
 
-  resetWorkout: () => set({
+    resetWorkout: () => set({
     currentWorkout: null,
     currentExerciseIndex: 0,
     currentSetIndex: 0,
@@ -203,6 +228,7 @@ const createWorkoutStore = (set, get) => ({
     isPaused: false,
     startTime: null,
     completedDistance: 0,
+    currentExerciseProgress: 0,
     skippedExercises: [],
     isRestActive: false,
     restTimeLeft: 0,
@@ -241,34 +267,8 @@ const createWorkoutStore = (set, get) => ({
 
   // Получение прогресса текущего упражнения
   getCurrentExerciseProgress: () => {
-    const { currentWorkout, completedDistance } = get();
-    const currentExerciseIndex = get().currentExerciseIndex;
-    const currentSetIndex = get().currentSetIndex;
-    if (!currentWorkout || currentExerciseIndex >= currentWorkout.blocks.length) {
-      return 0;
-    }
-
-    // Вычисляем общую дистанцию до текущего упражнения
-    let totalCompletedBefore = 0;
-    
-    // Дистанция всех предыдущих блоков
-    for (let i = 0; i < currentExerciseIndex; i++) {
-      totalCompletedBefore += currentWorkout.blocks[i].exercises.reduce((sum, exercise) => {
-        return sum + exercise.totalDistance;
-      }, 0);
-    }
-
-    // Дистанция предыдущих упражнений в текущем блоке
-    const currentBlock = currentWorkout.blocks[currentExerciseIndex];
-    for (let i = 0; i < currentSetIndex; i++) {
-      if (currentBlock.exercises[i]) {
-        totalCompletedBefore += currentBlock.exercises[i].totalDistance;
-      }
-    }
-
-    // Возвращаем прогресс только для текущего упражнения
-    const currentProgress = completedDistance - totalCompletedBefore;
-    return Math.max(0, currentProgress); // Не допускаем отрицательные значения
+    const { currentExerciseProgress } = get();
+    return currentExerciseProgress;
   },
 
   // Получение доступных интервалов для текущего упражнения
@@ -284,6 +284,52 @@ const createWorkoutStore = (set, get) => ({
     );
   },
 
+  // Автоматическое определение оптимального интервала для упражнения
+  getOptimalIntervalForExercise: () => {
+    const currentExercise = get().getCurrentExercise();
+    if (!currentExercise) return 50;
+
+    // Анализируем структуру упражнения
+    const { repeats, distance, totalDistance } = currentExercise;
+    
+    // Если есть информация о повторах и дистанции
+    if (repeats && distance && repeats > 1) {
+      // Проверяем, что общая дистанция делится на дистанцию одного повтора
+      if (totalDistance % distance === 0) {
+        return distance;
+      }
+    }
+    
+    // Если есть части упражнения, анализируем их
+    if (currentExercise.parts && currentExercise.parts.length > 0) {
+      // Ищем самую частую дистанцию среди частей
+      const distanceCounts = {};
+      currentExercise.parts.forEach(part => {
+        if (part.distance) {
+          distanceCounts[part.distance] = (distanceCounts[part.distance] || 0) + 1;
+        }
+      });
+      
+      // Находим дистанцию с максимальным количеством повторений
+      let maxCount = 0;
+      let optimalDistance = 50;
+      
+      Object.entries(distanceCounts).forEach(([distance, count]) => {
+        if (count > maxCount && totalDistance % parseInt(distance) === 0) {
+          maxCount = count;
+          optimalDistance = parseInt(distance);
+        }
+      });
+      
+      if (maxCount > 1) {
+        return optimalDistance;
+      }
+    }
+    
+    // Если ничего не подходит, возвращаем стандартный интервал
+    return 50;
+  },
+
   // Проверка, можно ли завершить упражнение
   canCompleteExercise: () => {
     const currentExercise = get().getCurrentExercise();
@@ -291,6 +337,11 @@ const createWorkoutStore = (set, get) => ({
 
     const currentProgress = get().getCurrentExerciseProgress();
     const { completionInterval } = get();
+    
+    // Дополнительные проверки для надежности
+    if (currentProgress < 0) return false;
+    if (completionInterval <= 0) return false;
+    if (currentExercise.totalDistance <= 0) return false;
     
     return currentProgress + completionInterval <= currentExercise.totalDistance;
   },

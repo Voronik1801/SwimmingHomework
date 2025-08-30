@@ -14,11 +14,21 @@ const WorkoutControls = ({
     canCompleteExercise, 
     getCurrentIntervalInfo, 
     getAvailableIntervalsForCurrentExercise,
+    getOptimalIntervalForExercise,
     setCompletionInterval,
     completionInterval
   } = useWorkoutStore();
   const intervalInfo = getCurrentIntervalInfo();
   const canComplete = canCompleteExercise();
+  
+  // Отладочная информация (можно убрать в продакшене)
+  console.log('WorkoutControls Debug:', {
+    canComplete,
+    intervalInfo,
+    currentExercise: useWorkoutStore.getState().getCurrentExercise(),
+    currentProgress: useWorkoutStore.getState().getCurrentExerciseProgress(),
+    completionInterval: useWorkoutStore.getState().completionInterval
+  });
 
   if (orientation === 'landscape') {
     return (
@@ -39,6 +49,9 @@ const WorkoutControls = ({
             {intervalInfo && (
               <span className="text-sm opacity-75">
                 +{intervalInfo.interval}м
+                {intervalInfo.interval === getOptimalIntervalForExercise() && (
+                  <span className="ml-1">⭐</span>
+                )}
               </span>
             )}
           </div>
@@ -96,20 +109,31 @@ const WorkoutControls = ({
       <div className="text-center">
         <p className="text-sm text-gray-600 mb-2">Интервал выполнения:</p>
         <div className="flex justify-center gap-2 flex-wrap">
-          {getAvailableIntervalsForCurrentExercise().map((interval) => (
-            <button
-              key={interval}
-              onClick={() => setCompletionInterval(interval)}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                completionInterval === interval
-                  ? 'bg-primary-500 text-white'
-                  : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-              }`}
-            >
-              {interval}м
-            </button>
-          ))}
+          {getAvailableIntervalsForCurrentExercise().map((interval) => {
+            const isOptimal = interval === getOptimalIntervalForExercise();
+            return (
+              <button
+                key={interval}
+                onClick={() => setCompletionInterval(interval)}
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors relative ${
+                  completionInterval === interval
+                    ? 'bg-primary-500 text-white'
+                    : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                }`}
+              >
+                {interval}м
+                {isOptimal && (
+                  <span className="absolute -top-1 -right-1 bg-green-500 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center">
+                    ⭐
+                  </span>
+                )}
+              </button>
+            );
+          })}
         </div>
+        <p className="text-xs text-gray-500 mt-1">
+          ⭐ Рекомендуемый интервал
+        </p>
       </div>
 
       {/* Complete Button - Full Width */}
@@ -129,6 +153,9 @@ const WorkoutControls = ({
             {intervalInfo && (
               <div className="text-sm opacity-75">
                 +{intervalInfo.interval}м
+                {intervalInfo.interval === getOptimalIntervalForExercise() && (
+                  <span className="ml-1">⭐</span>
+                )}
               </div>
             )}
           </div>

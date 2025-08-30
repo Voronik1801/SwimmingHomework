@@ -35,6 +35,7 @@ const WorkoutSession = () => {
   // Автоматически начинаем тренировку при загрузке
   useEffect(() => {
     if (currentWorkout && !isWorkoutActive) {
+      console.log('Starting workout...', { currentWorkout, isWorkoutActive });
       startWorkout();
     }
   }, [currentWorkout, isWorkoutActive, startWorkout]);

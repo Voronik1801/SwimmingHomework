@@ -4,6 +4,7 @@ import { ArrowRight, FileText, CheckCircle, AlertCircle } from 'lucide-react';
 import { useOrientation } from '../hooks/useOrientation';
 import { useWorkoutStore } from '../stores/workoutStore';
 import { sampleWorkouts } from '../utils/workoutParser';
+import WorkoutEditor from '../components/WorkoutEditor';
 
 const WorkoutInput = () => {
   const navigate = useNavigate();
@@ -14,6 +15,7 @@ const WorkoutInput = () => {
   const [isParsing, setIsParsing] = useState(false);
   const [parseError, setParseError] = useState(null);
   const [workoutText, setWorkoutText] = useState('');
+  const [isEditing, setIsEditing] = useState(false);
 
   const handleParse = async (text) => {
     console.log('handleParse вызван с текстом:', text);
@@ -81,6 +83,19 @@ const WorkoutInput = () => {
     }
   };
 
+  const handleEditWorkout = () => {
+    setIsEditing(true);
+  };
+
+  const handleSaveEditedWorkout = (editedWorkout) => {
+    setParsedWorkout(editedWorkout);
+    setIsEditing(false);
+  };
+
+  const handleCancelEdit = () => {
+    setIsEditing(false);
+  };
+
   const handleSampleWorkout = (sampleKey) => {
     const sampleText = sampleWorkouts[sampleKey];
     if (sampleText) {
@@ -119,6 +134,17 @@ const WorkoutInput = () => {
     };
     return styleNames[style] || style;
   };
+
+  // Если открыт редактор, показываем его
+  if (isEditing) {
+    return (
+      <WorkoutEditor
+        workout={parsedWorkout}
+        onSave={handleSaveEditedWorkout}
+        onCancel={handleCancelEdit}
+      />
+    );
+  }
 
   return (
     <div className={`min-h-screen flex flex-col ${orientation === 'landscape' ? 'landscape-layout' : 'portrait-layout'}`}>
@@ -292,16 +318,28 @@ const WorkoutInput = () => {
                 ))}
               </div>
 
-              {/* Start Button */}
-              <button
-                onClick={handleStartWorkout}
-                className="btn-success w-full py-4 rounded-xl font-semibold transition-all duration-200 hover:scale-105 active:scale-95"
-              >
-                <span className="flex items-center justify-center gap-2">
-                  Начать тренировку
-                  <ArrowRight className="w-5 h-5" />
-                </span>
-              </button>
+              {/* Action Buttons */}
+              <div className="space-y-3">
+                <button
+                  onClick={handleEditWorkout}
+                  className="btn-secondary w-full py-3 rounded-xl font-semibold transition-all duration-200 hover:scale-105 active:scale-95"
+                >
+                  <span className="flex items-center justify-center gap-2">
+                    <span className="text-lg">✏️</span>
+                    Редактировать тренировку
+                  </span>
+                </button>
+                
+                <button
+                  onClick={handleStartWorkout}
+                  className="btn-success w-full py-4 rounded-xl font-semibold transition-all duration-200 hover:scale-105 active:scale-95"
+                >
+                  <span className="flex items-center justify-center gap-2">
+                    Начать тренировку
+                    <ArrowRight className="w-5 h-5" />
+                  </span>
+                </button>
+              </div>
             </div>
           ) : (
             <div className="bg-gray-50 border-2 border-dashed border-gray-300 rounded-xl p-8 text-center">

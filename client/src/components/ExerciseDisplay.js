@@ -1,6 +1,7 @@
 import React from 'react';
 import { useWorkoutStore } from '../stores/workoutStore';
 import EquipmentDisplay from './EquipmentDisplay';
+import ExerciseHint from './ExerciseHint';
 
 // Функция для получения эмодзи стиля
 const getStyleEmoji = (style) => {
@@ -15,7 +16,11 @@ const getStyleEmoji = (style) => {
     'спина': '🦋',
     'батт': '🦋',
     'кмпл': '🏊‍♂️',
-    'комплекс': '🏊‍♂️'
+    'комплекс': '🏊‍♂️',
+    'карабас': '🏊‍♀️',
+    'дирижёр': '🎼',
+    'переменка': '🔄',
+    'супермен': '🦸‍♂️'
   };
   return styleMap[style] || '🏊‍♂️';
 };
@@ -33,7 +38,11 @@ const getStyleName = (style) => {
     'спина': 'Спина',
     'батт': 'Баттерфляй',
     'кмпл': 'Комплекс',
-    'комплекс': 'Комплекс'
+    'комплекс': 'Комплекс',
+    'карабас': 'Карабас',
+    'дирижёр': 'Дирижёр',
+    'переменка': 'Переменка',
+    'супермен': 'Супермен'
   };
   return styleMap[style] || style;
 };
@@ -91,6 +100,36 @@ const ExerciseDisplay = ({ orientation }) => {
             {currentExercise.description}
           </h3>
           
+          {/* Части сложного упражнения */}
+          {currentExercise.parts && currentExercise.parts.length > 1 && (
+            <div className="mt-3 space-y-2">
+              <h4 className="text-sm font-medium text-gray-700">Части упражнения:</h4>
+              {currentExercise.parts.map((part, index) => (
+                <div key={index} className="flex items-center justify-between bg-gray-50 rounded-lg p-2">
+                  <div className="flex items-center gap-2">
+                    <span className="text-lg">{getStyleEmoji(part.style)}</span>
+                    <span className="text-sm font-medium">
+                      {part.distance}м {getStyleName(part.style)}
+                    </span>
+                    {part.technique && (
+                      <span className="text-xs text-blue-600 bg-blue-100 px-2 py-1 rounded">
+                        {part.technique}
+                      </span>
+                    )}
+                    {part.intensity && (
+                      <span className="text-xs text-green-600 bg-green-100 px-2 py-1 rounded">
+                        {part.intensity}
+                      </span>
+                    )}
+                  </div>
+                  <span className="text-xs text-gray-500">
+                    {part.distance}м
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
+          
           {/* Пульсовая зона */}
           {currentExercise.pulse && (
             <div className="mb-2">
@@ -109,6 +148,9 @@ const ExerciseDisplay = ({ orientation }) => {
             </div>
           )}
         </div>
+
+        {/* Подсказки по упражнению */}
+        <ExerciseHint exercise={currentExercise} />
 
         {/* Прогресс текущего упражнения */}
         <div className="text-center">

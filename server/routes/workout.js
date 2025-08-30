@@ -60,8 +60,11 @@ const parseWorkoutText = async (text) => {
     // Инвентарь - исправленный паттерн
     equipment: /(ласты|лопатки|колобашка|доска|трубка|пояс|резина|кистевые\s+лопатки)/gi,
     
-    // Сложные упражнения с частями
-    complexExercise: /(\d+)\*(\d+)\s*([^0-9]+)/i,
+    // Сложные упражнения с частями (например: 50 карабас + 50 переменный батт + 50 на спине в стрелочке + 50 вст мягко)
+    complexExercise: /(\d+)\s+([а-яё\s]+(?:\s*\+\s*\d+\s+[а-яё\s]+)*)/i,
+    
+    // Сложные упражнения с повторами и частями
+    complexRepeatExercise: /(\d+)[×x]\s*(\d+)\s*([^0-9]+)/i,
     
     // Простые упражнения
     simpleExercise: /(\d+)\s*([а-яё]+)/i,
@@ -82,24 +85,31 @@ const parseWorkoutText = async (text) => {
     repeatExercise: /(\d+)[×x]\s*(\d+)\s+([а-яё]+(?:\s+с\s+[а-яё]+)?)/i
   };
 
-  // Расширенный словарь стилей плавания
+  // Расширенный словарь стилей плавания с учетом терминологии
   const styleMap = {
     'вст': 'freestyle',
     'вольный': 'freestyle',
     'кроль': 'freestyle',
+    'кроль в полной координации': 'freestyle',
+    'кроль в п.к.': 'freestyle',
     'кмпл': 'IM',
     'кмпс': 'IM',
     'комплекс': 'IM',
+    'комплексное плавание': 'IM',
+    'комп. плав.': 'IM',
     'батт': 'butterfly',
     'баттерфляй': 'butterfly',
+    'дельфин': 'butterfly',
     'брасс': 'breaststroke',
     'спина': 'backstroke',
     'на спине': 'backstroke',
-    'дельфин': 'butterfly',
-    'карабас': 'карабас' // специальная техника
+    'карабас': 'карабас', // специальная техника
+    'дирижёр': 'дирижёр', // специальная техника
+    'переменка': 'переменка', // специальная техника
+    'супермен': 'супермен' // специальная техника
   };
 
-  // Словарь техник
+  // Расширенный словарь техник с учетом терминологии
   const techniqueMap = {
     'дирижёр': 'дирижёр',
     'супермен': 'супермен',
@@ -110,7 +120,20 @@ const parseWorkoutText = async (text) => {
     '3х уд': '3х уд',
     'двойки': 'двойки',
     'четверки': 'четверки',
-    'шестерки': 'шестерки'
+    'шестерки': 'шестерки',
+    'длинный гребок': 'длинный гребок',
+    'гребок': 'гребок',
+    'захват': 'захват',
+    'подтягивание': 'подтягивание',
+    'отталкивание': 'отталкивание',
+    'пронос': 'пронос',
+    'мягкость': 'мягкость',
+    'наплыв': 'наплыв',
+    'ротация': 'ротация',
+    'цикл': 'цикл',
+    'смена рук': 'смена рук',
+    'эффективность гребка': 'эффективность гребка',
+    'swolf': 'swolf'
   };
 
   // Словарь типов блоков
@@ -269,10 +292,43 @@ const parseWorkoutText = async (text) => {
       continue;
     }
 
-    // Проверяем на сложное упражнение (например, 4*200 с частями)
+    // Проверяем на сложное упражнение с частями (например: 50 карабас + 50 переменный батт + 50 на спине в стрелочке + 50 вст мягко)
     const complexMatch = trimmedLine.match(patterns.complexExercise);
     if (complexMatch) {
-      const [, repeats, distance, description] = complexMatch;
+      const [, totalDistance, description] = complexMatch;
+      
+      // Парсим части упражнения
+      const parts = parseExerciseParts(description);
+      
+      // Извлекаем инвентарь из описания упражнения
+      const exerciseEquipment = extractEquipmentFromDescription(trimmedLine);
+      
+      // Вычисляем общее расстояние из частей
+      const calculatedDistance = parts.reduce((sum, part) => sum + part.distance, 0);
+      
+      const exercise = {
+        description: trimmedLine,
+        repeats: 1,
+        distance: calculatedDistance,
+        totalDistance: calculatedDistance,
+        parts: parts,
+        rest: null,
+        equipment: exerciseEquipment,
+        intensity: null,
+        pulse: null,
+        mode: null
+      };
+
+      currentBlock.exercises.push(exercise);
+      volume += exercise.totalDistance;
+      currentEquipment = []; // Сбрасываем инвентарь после упражнения
+      continue;
+    }
+
+    // Проверяем на сложное упражнение с повторами (например, 4×200 с частями)
+    const complexRepeatMatch = trimmedLine.match(patterns.complexRepeatExercise);
+    if (complexRepeatMatch) {
+      const [, repeats, distance, description] = complexRepeatMatch;
       
       // Парсим части упражнения
       const parts = parseExerciseParts(description);
@@ -287,7 +343,7 @@ const parseWorkoutText = async (text) => {
         totalDistance: parseInt(repeats) * parseInt(distance),
         parts: parts,
         rest: null,
-        equipment: exerciseEquipment, // Используем только найденный инвентарь
+        equipment: exerciseEquipment,
         intensity: null,
         pulse: null,
         mode: null
@@ -391,8 +447,8 @@ const parseExerciseParts = (description) => {
       breathing: null
     };
 
-    // Ищем дистанцию
-    const distanceMatch = segment.match(/(\d+)/);
+    // Ищем дистанцию в начале сегмента
+    const distanceMatch = segment.match(/^(\d+)/);
     if (distanceMatch) {
       part.distance = parseInt(distanceMatch[1]);
     }
@@ -400,11 +456,18 @@ const parseExerciseParts = (description) => {
     // Ищем стиль
     const styleMap = {
       'вст': 'freestyle',
+      'вольный': 'freestyle',
+      'кроль': 'freestyle',
       'батт': 'butterfly',
+      'баттерфляй': 'butterfly',
+      'дельфин': 'butterfly',
       'брасс': 'breaststroke',
       'спина': 'backstroke',
       'на спине': 'backstroke',
-      'карабас': 'карабас'
+      'карабас': 'карабас',
+      'дирижёр': 'дирижёр',
+      'переменка': 'переменка',
+      'супермен': 'супермен'
     };
 
     for (const [key, value] of Object.entries(styleMap)) {
@@ -418,18 +481,47 @@ const parseExerciseParts = (description) => {
     const techniqueMap = {
       'переменный': 'переменный',
       'стрелочка': 'стрелочка',
-      'мягко': 'мягко',
-      'мощно': 'мощно',
-      'кайфуя': 'кайфуя'
+      'дирижёр': 'дирижёр',
+      'супермен': 'супермен',
+      'переменка': 'переменка'
     };
 
     for (const [key, value] of Object.entries(techniqueMap)) {
       if (segment.toLowerCase().includes(key)) {
-        if (key === 'мягко' || key === 'мощно' || key === 'кайфуя') {
-          part.intensity = value;
-        } else {
-          part.technique = value;
-        }
+        part.technique = value;
+        break;
+      }
+    }
+
+    // Ищем интенсивность
+    const intensityMap = {
+      'мягко': 'мягко',
+      'мощно': 'мощно',
+      'кайфуя': 'кайфуя',
+      'легко': 'легко',
+      'средне': 'средне',
+      'сильно': 'сильно'
+    };
+
+    for (const [key, value] of Object.entries(intensityMap)) {
+      if (segment.toLowerCase().includes(key)) {
+        part.intensity = value;
+        break;
+      }
+    }
+
+    // Ищем дыхание
+    const breathingMap = {
+      '2/2': '2/2',
+      '3/3': '3/3',
+      '5/5': '5/5',
+      '2х уд': '2х уд',
+      '3х уд': '3х уд'
+    };
+
+    for (const [key, value] of Object.entries(breathingMap)) {
+      if (segment.toLowerCase().includes(key)) {
+        part.breathing = value;
         break;
       }
     }
