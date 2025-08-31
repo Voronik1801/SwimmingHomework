@@ -3,6 +3,7 @@ const cors = require('cors');
 const helmet = require('helmet');
 const compression = require('compression');
 const path = require('path');
+const handleStaticFiles = require('./static');
 require('dotenv').config();
 
 const app = express();
@@ -45,20 +46,8 @@ app.use('/api/dictionary', require('./routes/dictionary'));
 
 // Serve static files from React build
 if (process.env.NODE_ENV === 'production') {
-  // Serve static files with proper MIME types
-  app.use('/static', express.static(path.join(__dirname, '../client/build/static'), {
-    setHeaders: (res, path) => {
-      if (path.endsWith('.js')) {
-        res.setHeader('Content-Type', 'application/javascript');
-      } else if (path.endsWith('.css')) {
-        res.setHeader('Content-Type', 'text/css');
-      } else if (path.endsWith('.json')) {
-        res.setHeader('Content-Type', 'application/json');
-      } else if (path.endsWith('.png') || path.endsWith('.jpg') || path.endsWith('.jpeg') || path.endsWith('.gif') || path.endsWith('.svg')) {
-        res.setHeader('Content-Type', 'image/' + path.split('.').pop());
-      }
-    }
-  }));
+  // Use custom static file handler
+  app.use(handleStaticFiles);
   
   // Serve other static files
   app.use(express.static(path.join(__dirname, '../client/build')));
