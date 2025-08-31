@@ -53,18 +53,18 @@ export const parseWorkoutText = async (text) => {
   };
 
   // Словарь техник
-  const techniqueMap = {
-    'дирижёр': 'дирижёр',
-    'супермен': 'супермен',
-    'переменка': 'переменка',
-    'переменный': 'переменный',
-    'стрелочка': 'стрелочка',
-    '2х уд': '2х уд',
-    '3х уд': '3х уд',
-    'двойки': 'двойки',
-    'четверки': 'четверки',
-    'шестерки': 'шестерки'
-  };
+  // const techniqueMap = {
+  //   'дирижёр': 'дирижёр',
+  //   'супермен': 'супермен',
+  //   'переменка': 'переменка',
+  //   'переменный': 'переменный',
+  //   'стрелочка': 'стрелочка',
+  //   '2х уд': '2х уд',
+  //   '3х уд': '3х уд',
+  //   'двойки': 'двойки',
+  //   'четверки': 'четверки',
+  //   'шестерки': 'шестерки'
+  // };
 
   // Словарь типов блоков
   const blockTypeMap = {
@@ -82,7 +82,7 @@ export const parseWorkoutText = async (text) => {
   let intensity = '🟡';
   let volume = 0;
   let workoutNumber = null;
-  let workoutTitle = 'Тренировка';
+  // let workoutTitle = 'Тренировка';
 
   for (const line of lines) {
     const trimmedLine = line.trim();
@@ -93,7 +93,7 @@ export const parseWorkoutText = async (text) => {
     const workoutMatch = trimmedLine.match(patterns.workoutNumber);
     if (workoutMatch) {
       workoutNumber = parseInt(workoutMatch[1]);
-      workoutTitle = `${workoutMatch[1]}я тренировка`;
+      // workoutTitle = `${workoutMatch[1]}я тренировка`;
       continue;
     }
 
@@ -299,29 +299,29 @@ const parseExerciseParts = (description) => {
 };
 
 // Генерация заголовка тренировки
-const generateTitle = (blocks, volume, workoutNumber) => {
-  if (workoutNumber) {
-    return `${workoutNumber}я тренировка (${volume}м)`;
-  }
-  
-  const blockTypes = blocks.map(block => block.type);
-  const hasWarmup = blockTypes.includes('warmup');
-  const hasCooldown = blockTypes.includes('cooldown');
-  
-  let title = '';
-  
-  if (hasWarmup && hasCooldown) {
-    title = 'Полная тренировка';
-  } else if (hasWarmup) {
-    title = 'Тренировка с разминкой';
-  } else if (hasCooldown) {
-    title = 'Тренировка с заминкой';
-  } else {
-    title = 'Основная тренировка';
-  }
-  
-  return `${title} (${volume}м)`;
-};
+// const generateTitle = (blocks, volume, workoutNumber) => {
+//   if (workoutNumber) {
+//     return `${workoutNumber}я тренировка (${volume}м)`;
+//   }
+//   
+//   const blockTypes = blocks.map(block => block.type);
+//   const hasWarmup = blockTypes.includes('warmup');
+//   const hasCooldown = blockTypes.includes('cooldown');
+//   
+//   let title = '';
+//   
+//   if (hasWarmup && hasCooldown) {
+//     title = 'Полная тренировка';
+//   } else if (hasWarmup) {
+//     title = 'Тренировка с разминкой';
+//   } else if (hasCooldown) {
+//     title = 'Тренировка с заминкой';
+//   } else {
+//     title = 'Основная тренировка';
+//   }
+//   
+//   return `${title} (${volume}м)`;
+// };
 
 // Примеры тренировок для тестирования
 export const sampleWorkouts = {

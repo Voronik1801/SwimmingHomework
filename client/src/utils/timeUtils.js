@@ -52,6 +52,8 @@ export const parseTimeString = (timeString) => {
           return { type: 'duration', seconds: parseInt(match[1]) * 60 };
         case 'time':
           return { type: 'time', minutes: parseInt(match[1]), seconds: parseInt(match[2]) };
+        default:
+          return { type: 'unknown', value: timeString };
       }
     }
   }

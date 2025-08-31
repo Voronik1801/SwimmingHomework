@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 
 export const useOrientation = () => {
   const [orientation, setOrientation] = useState('portrait');
-  const [isChanging, setIsChanging] = useState(false);
+  // const [isChanging, setIsChanging] = useState(false);
 
   useEffect(() => {
     const determineOrientation = () => {
@@ -11,13 +11,13 @@ export const useOrientation = () => {
     };
 
     const handleOrientationChange = () => {
-      setIsChanging(true);
+      // setIsChanging(true);
       
       // Small delay to let the orientation change complete
       setTimeout(() => {
         const newOrientation = determineOrientation();
         setOrientation(newOrientation);
-        setIsChanging(false);
+        // setIsChanging(false);
       }, 100);
     };
 
