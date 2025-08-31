@@ -44,9 +44,16 @@ function handleStaticFiles(req, res, next) {
   if (url.startsWith('/static/')) {
     const filePath = path.join(__dirname, '../client/build', url);
     
+    console.log(`[Static] Requesting: ${url}`);
+    console.log(`[Static] File path: ${filePath}`);
+    console.log(`[Static] File exists: ${fs.existsSync(filePath)}`);
+    
     if (fs.existsSync(filePath) && fs.statSync(filePath).isFile()) {
+      console.log(`[Static] Serving file: ${filePath}`);
       serveStaticFile(req, res, filePath);
       return;
+    } else {
+      console.log(`[Static] File not found: ${filePath}`);
     }
   }
   
@@ -54,9 +61,16 @@ function handleStaticFiles(req, res, next) {
   if (url === '/manifest.json' || url === '/favicon.ico' || url === '/logo192.png' || url === '/logo512.png') {
     const filePath = path.join(__dirname, '../client/build', url);
     
+    console.log(`[Static] Requesting: ${url}`);
+    console.log(`[Static] File path: ${filePath}`);
+    console.log(`[Static] File exists: ${fs.existsSync(filePath)}`);
+    
     if (fs.existsSync(filePath) && fs.statSync(filePath).isFile()) {
+      console.log(`[Static] Serving file: ${filePath}`);
       serveStaticFile(req, res, filePath);
       return;
+    } else {
+      console.log(`[Static] File not found: ${filePath}`);
     }
   }
   

@@ -46,6 +46,10 @@ app.use('/api/dictionary', require('./routes/dictionary'));
 
 // Serve static files from React build
 if (process.env.NODE_ENV === 'production') {
+  console.log('[Server] Production mode - serving static files');
+  console.log(`[Server] Build directory: ${path.join(__dirname, '../client/build')}`);
+  console.log(`[Server] Build exists: ${require('fs').existsSync(path.join(__dirname, '../client/build'))}`);
+  
   // Use custom static file handler
   app.use(handleStaticFiles);
   
@@ -54,10 +58,13 @@ if (process.env.NODE_ENV === 'production') {
   
   // Handle all other routes by serving index.html
   app.get('*', (req, res) => {
+    console.log(`[Server] Handling route: ${req.url}`);
     const indexPath = path.join(__dirname, '../client/build', 'index.html');
     if (require('fs').existsSync(indexPath)) {
+      console.log(`[Server] Serving index.html: ${indexPath}`);
       res.sendFile(indexPath);
     } else {
+      console.log(`[Server] Index.html not found: ${indexPath}`);
       res.status(404).json({ error: 'Static files not found. Please run npm run build first.' });
     }
   });
