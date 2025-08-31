@@ -1,7 +1,5 @@
 {
   "version": 2,
-  "buildCommand": "npm run install-all && cd client && npm run build",
-  "outputDirectory": "client/build",
   "builds": [
     {
       "src": "server/index.js",
