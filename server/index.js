@@ -13,13 +13,13 @@ app.use(helmet({
   contentSecurityPolicy: {
     directives: {
       defaultSrc: ["'self'"],
-      styleSrc: ["'self'", "'unsafe-inline'"],
+      styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
       scriptSrc: ["'self'"],
       imgSrc: ["'self'", "data:", "https:"],
       connectSrc: process.env.NODE_ENV === 'production'
         ? ["'self'", "https://*.vercel.app"]
         : ["'self'", "http://localhost:3000", "http://localhost:3001"],
-      fontSrc: ["'self'", "https:"],
+      fontSrc: ["'self'", "https://fonts.gstatic.com"],
       objectSrc: ["'none'"],
       mediaSrc: ["'self'"],
       frameSrc: ["'none'"],
@@ -45,8 +45,21 @@ app.use('/api/dictionary', require('./routes/dictionary'));
 
 // Serve static files from React build
 if (process.env.NODE_ENV === 'production') {
+  // Serve static files with proper MIME types
+  app.use('/static', express.static(path.join(__dirname, '../client/build/static'), {
+    setHeaders: (res, path) => {
+      if (path.endsWith('.js')) {
+        res.setHeader('Content-Type', 'application/javascript');
+      } else if (path.endsWith('.css')) {
+        res.setHeader('Content-Type', 'text/css');
+      }
+    }
+  }));
+  
+  // Serve other static files
   app.use(express.static(path.join(__dirname, '../client/build')));
   
+  // Handle all other routes by serving index.html
   app.get('*', (req, res) => {
     res.sendFile(path.join(__dirname, '../client/build', 'index.html'));
   });
