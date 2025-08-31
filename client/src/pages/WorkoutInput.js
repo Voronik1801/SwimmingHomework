@@ -5,6 +5,7 @@ import { useOrientation } from '../hooks/useOrientation';
 import { useWorkoutStore } from '../stores/workoutStore';
 import { sampleWorkouts } from '../utils/workoutParser';
 import WorkoutEditor from '../components/WorkoutEditor';
+import API_BASE_URL from '../config/api';
 
 const WorkoutInput = () => {
   const navigate = useNavigate();
@@ -32,7 +33,7 @@ const WorkoutInput = () => {
       console.log('Отправка запроса на парсинг:', text.substring(0, 100) + '...');
       
       // Используем серверный API вместо клиентского парсера
-      const response = await fetch('http://localhost:3001/api/workout/parse', {
+      const response = await fetch(`${API_BASE_URL}/workout/parse`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -59,7 +60,7 @@ const WorkoutInput = () => {
     } catch (error) {
       console.error('Parse error:', error);
       if (error.name === 'TypeError' && error.message.includes('fetch')) {
-        setParseError('Ошибка соединения с сервером. Проверьте, что сервер запущен на порту 3001.');
+        setParseError('Ошибка соединения с сервером. Попробуйте обновить страницу.');
       } else if (error.message.includes('HTTP error')) {
         setParseError('Ошибка сервера. Попробуйте еще раз.');
       } else {

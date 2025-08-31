@@ -16,7 +16,9 @@ app.use(helmet({
       styleSrc: ["'self'", "'unsafe-inline'"],
       scriptSrc: ["'self'"],
       imgSrc: ["'self'", "data:", "https:"],
-      connectSrc: ["'self'", "http://localhost:3000", "http://localhost:3001"],
+      connectSrc: process.env.NODE_ENV === 'production'
+        ? ["'self'", "https://swimming-homework.vercel.app"]
+        : ["'self'", "http://localhost:3000", "http://localhost:3001"],
       fontSrc: ["'self'", "https:"],
       objectSrc: ["'none'"],
       mediaSrc: ["'self'"],
@@ -27,7 +29,9 @@ app.use(helmet({
 
 app.use(compression());
 app.use(cors({
-  origin: ['http://localhost:3000', 'http://localhost:3001'],
+  origin: process.env.NODE_ENV === 'production' 
+    ? ['https://swimming-homework.vercel.app', 'https://swimming-homework.vercel.app/']
+    : ['http://localhost:3000', 'http://localhost:3001'],
   credentials: true
 }));
 app.use(express.json({ limit: '10mb' }));
