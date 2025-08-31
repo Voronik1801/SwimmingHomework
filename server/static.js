@@ -22,6 +22,8 @@ function serveStaticFile(req, res, filePath) {
   const ext = path.extname(filePath).toLowerCase();
   const mimeType = mimeTypes[ext] || 'application/octet-stream';
   
+  console.log(`[Static] Serving ${filePath} with MIME type: ${mimeType}`);
+  
   res.setHeader('Content-Type', mimeType);
   res.setHeader('Cache-Control', 'public, max-age=31536000'); // 1 year cache
   
@@ -29,11 +31,16 @@ function serveStaticFile(req, res, filePath) {
   stream.pipe(res);
   
   stream.on('error', (err) => {
+    console.error(`[Static] Error serving ${filePath}:`, err);
     if (err.code === 'ENOENT') {
       res.status(404).send('File not found');
     } else {
       res.status(500).send('Internal server error');
     }
+  });
+  
+  stream.on('end', () => {
+    console.log(`[Static] Successfully served ${filePath}`);
   });
 }
 
