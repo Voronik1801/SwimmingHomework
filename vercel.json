@@ -16,7 +16,9 @@
       "dest": "/server/index.js"
     }
   ],
-  "env": {
-    "NODE_ENV": "production"
+  "functions": {
+    "server/index.js": {
+      "includeFiles": "client/build/**"
+    }
   }
 }

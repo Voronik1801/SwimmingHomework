@@ -52,6 +52,10 @@ if (process.env.NODE_ENV === 'production') {
         res.setHeader('Content-Type', 'application/javascript');
       } else if (path.endsWith('.css')) {
         res.setHeader('Content-Type', 'text/css');
+      } else if (path.endsWith('.json')) {
+        res.setHeader('Content-Type', 'application/json');
+      } else if (path.endsWith('.png') || path.endsWith('.jpg') || path.endsWith('.jpeg') || path.endsWith('.gif') || path.endsWith('.svg')) {
+        res.setHeader('Content-Type', 'image/' + path.split('.').pop());
       }
     }
   }));
@@ -61,7 +65,12 @@ if (process.env.NODE_ENV === 'production') {
   
   // Handle all other routes by serving index.html
   app.get('*', (req, res) => {
-    res.sendFile(path.join(__dirname, '../client/build', 'index.html'));
+    const indexPath = path.join(__dirname, '../client/build', 'index.html');
+    if (require('fs').existsSync(indexPath)) {
+      res.sendFile(indexPath);
+    } else {
+      res.status(404).json({ error: 'Static files not found. Please run npm run build first.' });
+    }
   });
 }
 
