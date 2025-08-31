@@ -17,7 +17,7 @@ app.use(helmet({
       scriptSrc: ["'self'"],
       imgSrc: ["'self'", "data:", "https:"],
       connectSrc: process.env.NODE_ENV === 'production'
-        ? ["'self'", "https://swimming-homework.vercel.app"]
+        ? ["'self'", "https://*.vercel.app"]
         : ["'self'", "http://localhost:3000", "http://localhost:3001"],
       fontSrc: ["'self'", "https:"],
       objectSrc: ["'none'"],
@@ -30,7 +30,7 @@ app.use(helmet({
 app.use(compression());
 app.use(cors({
   origin: process.env.NODE_ENV === 'production' 
-    ? ['https://swimming-homework.vercel.app', 'https://swimming-homework.vercel.app/']
+    ? true // Разрешаем все домены в продакшене
     : ['http://localhost:3000', 'http://localhost:3001'],
   credentials: true
 }));
