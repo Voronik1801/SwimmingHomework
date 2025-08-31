@@ -11,6 +11,7 @@ const createWorkoutStore = (set, get) => ({
   isWorkoutActive: false,
   isPaused: false,
   startTime: null,
+  endTime: null,
   totalDistance: 0,
   completedDistance: 0,
   currentExerciseProgress: 0, // Прогресс текущего упражнения
@@ -44,6 +45,7 @@ const createWorkoutStore = (set, get) => ({
     set({ 
       isWorkoutActive: true, 
       startTime: Date.now(),
+      endTime: null, // Сбрасываем время завершения
       currentExerciseIndex: 0,
       currentSetIndex: 0,
       currentPartIndex: 0,
@@ -124,6 +126,7 @@ const createWorkoutStore = (set, get) => ({
         set({
           isWorkoutActive: false,
           isPaused: false,
+          endTime: Date.now(), // Сохраняем время завершения
           currentExerciseIndex: 0,
           currentSetIndex: 0,
           currentPartIndex: 0,
@@ -227,6 +230,7 @@ const createWorkoutStore = (set, get) => ({
     isWorkoutActive: false,
     isPaused: false,
     startTime: null,
+    endTime: null,
     completedDistance: 0,
     currentExerciseProgress: 0,
     skippedExercises: [],
@@ -369,9 +373,20 @@ const createWorkoutStore = (set, get) => ({
   },
 
   getWorkoutTime: () => {
-    const { startTime, isWorkoutActive } = get();
-    if (!startTime || !isWorkoutActive) return 0;
-    return Math.floor((Date.now() - startTime) / 1000);
+    const { startTime, isWorkoutActive, endTime } = get();
+    if (!startTime) return 0;
+    
+    // Если тренировка завершена, используем сохраненное время
+    if (endTime) {
+      return Math.floor((endTime - startTime) / 1000);
+    }
+    
+    // Если тренировка активна, используем текущее время
+    if (isWorkoutActive) {
+      return Math.floor((Date.now() - startTime) / 1000);
+    }
+    
+    return 0;
   },
 
 
