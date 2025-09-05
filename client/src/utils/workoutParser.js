@@ -43,13 +43,19 @@ export const parseWorkoutText = async (text) => {
     'кмпл': 'IM',
     'кмпс': 'IM',
     'комплекс': 'IM',
+    'комплексное': 'IM',
     'батт': 'butterfly',
     'баттерфляй': 'butterfly',
+    'дельфин': 'butterfly',
     'брасс': 'breaststroke',
     'спина': 'backstroke',
     'на спине': 'backstroke',
-    'дельфин': 'butterfly',
-    'карабас': 'карабас' // специальная техника
+    'карабас': 'карабас', // специальная техника
+    'произвольно': 'freestyle',
+    'свой': 'freestyle',
+    'микс': 'mixed',
+    'чередуя': 'alternating',
+    'переменный': 'alternating'
   };
 
   // Словарь техник
@@ -173,6 +179,12 @@ export const parseWorkoutText = async (text) => {
       }
 
       const [, distance, style] = simpleMatch;
+      
+      // Определяем стиль или сохраняем как комментарий
+      const recognizedStyle = styleMap[style.toLowerCase()];
+      const exerciseStyle = recognizedStyle || 'unknown';
+      const exerciseComment = recognizedStyle ? null : style;
+      
       const exercise = {
         description: trimmedLine,
         repeats: 1,
@@ -180,10 +192,11 @@ export const parseWorkoutText = async (text) => {
         totalDistance: parseInt(distance),
         parts: [{
           distance: parseInt(distance),
-          style: styleMap[style.toLowerCase()] || style.toLowerCase(),
+          style: exerciseStyle,
           technique: null,
           intensity: null,
-          breathing: null
+          breathing: null,
+          comment: exerciseComment
         }],
         rest: null,
         equipment: [],
@@ -277,14 +290,28 @@ const parseExerciseParts = (description, exerciseDistance) => {
       'спина': 'backstroke',
       'на спине': 'backstroke',
       'карабас': 'карабас',
-      'кроль': 'freestyle'
+      'кроль': 'freestyle',
+      'произвольно': 'freestyle',
+      'свой': 'freestyle',
+      'микс': 'mixed',
+      'чередуя': 'alternating',
+      'переменный': 'alternating'
     };
 
+    let foundStyle = null;
     for (const [key, value] of Object.entries(styleMap)) {
       if (description.toLowerCase().includes(key)) {
-        part.style = value;
+        foundStyle = value;
         break;
       }
+    }
+
+    // Если стиль не найден, сохраняем оригинальное описание как комментарий
+    if (!foundStyle) {
+      part.style = 'unknown';
+      part.comment = description.trim();
+    } else {
+      part.style = foundStyle;
     }
 
     // Ищем технику
@@ -335,14 +362,28 @@ const parseExerciseParts = (description, exerciseDistance) => {
       'спина': 'backstroke',
       'на спине': 'backstroke',
       'карабас': 'карабас',
-      'кроль': 'freestyle'
+      'кроль': 'freestyle',
+      'произвольно': 'freestyle',
+      'свой': 'freestyle',
+      'микс': 'mixed',
+      'чередуя': 'alternating',
+      'переменный': 'alternating'
     };
 
+    let foundStyle = null;
     for (const [key, value] of Object.entries(styleMap)) {
       if (segment.toLowerCase().includes(key)) {
-        part.style = value;
+        foundStyle = value;
         break;
       }
+    }
+
+    // Если стиль не найден, сохраняем оригинальное описание как комментарий
+    if (!foundStyle) {
+      part.style = 'unknown';
+      part.comment = segment.trim();
+    } else {
+      part.style = foundStyle;
     }
 
     // Ищем технику
